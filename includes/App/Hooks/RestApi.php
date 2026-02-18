@@ -35,6 +35,12 @@ class RestApi
                 'permission_callback' => [$this, 'requireAdminPermission'],
             ],
         ]);
+
+        register_rest_route(self::NAMESPACE, '/seed/fluent-crm/stats', [
+            'methods'             => 'GET',
+            'callback'            => [new FluentCrmController(), 'stats'],
+            'permission_callback' => [$this, 'requireAdminPermission'],
+        ]);
     }
 
     public function requireAdminPermission(): bool
@@ -47,6 +53,7 @@ class RestApi
         $intArg = [
             'type'     => 'integer',
             'minimum'  => 0,
+            'maximum'  => 5000,
             'required' => false,
         ];
 

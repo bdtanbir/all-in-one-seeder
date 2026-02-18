@@ -27,9 +27,38 @@
         <h2 class="aios-view-title">FluentCRM Seeder</h2>
         <p class="aios-view-subtitle">
           Configure how many records to generate per table, then click
-          <strong>Run Seeder</strong>.
+          <strong>Run Seeder</strong>. Maximum 5 000 per field.
         </p>
 
+        <!-- Current record counts card -->
+        <div v-if="stats" class="aios-stats-card">
+          <h3 class="aios-stats-card__title">Current data in FluentCRM</h3>
+          <div class="aios-stats-grid">
+            <div
+              v-for="key in MAIN_STAT_KEYS"
+              :key="key"
+              class="aios-stat"
+            >
+              <span class="aios-stat__count">{{ (stats[key] ?? 0).toLocaleString() }}</span>
+              <span class="aios-stat__label">{{ STAT_LABELS[key] }}</span>
+            </div>
+          </div>
+          <details class="aios-stats-detail">
+            <summary>Derived tables</summary>
+            <div class="aios-stats-grid aios-stats-grid--sm">
+              <div
+                v-for="key in DERIVED_STAT_KEYS"
+                :key="key"
+                class="aios-stat aios-stat--sm"
+              >
+                <span class="aios-stat__count">{{ (stats[key] ?? 0).toLocaleString() }}</span>
+                <span class="aios-stat__label">{{ STAT_LABELS[key] }}</span>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <!-- Form sections -->
         <div
           v-for="section in sections"
           :key="section.label"
@@ -46,9 +75,8 @@
           </div>
         </div>
 
-        <!-- Derived fields note -->
         <p class="aios-note">
-          Campaign emails, funnel enrollments, and metrics are generated automatically
+          Campaign emails, funnel enrollments, and metrics are derived automatically
           from the records above.
         </p>
 
@@ -78,12 +106,13 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import { useApi }      from '../composables/useApi.js';
-import SeederForm      from '../components/SeederForm.vue';
-import SeederResult    from '../components/SeederResult.vue';
+import { useApi }   from '../composables/useApi.js';
+import SeederForm   from '../components/SeederForm.vue';
+import SeederResult from '../components/SeederResult.vue';
 
 const { get, post, del } = useApi();
 
+// ── State ────────────────────────────────────────────────────────────────────
 const loading       = ref(true);
 const running       = ref(false);
 const runningAction = ref('');
@@ -91,12 +120,45 @@ const sections      = ref([]);
 const form          = reactive({});
 const result        = ref(null);
 const resultMode    = ref('seed');
+const stats         = ref(null);
 
+// ── Stats display config ─────────────────────────────────────────────────────
+const MAIN_STAT_KEYS = [
+  'subscribers', 'companies', 'lists', 'tags', 'campaigns', 'funnels',
+];
+const DERIVED_STAT_KEYS = [
+  'subscriber_pivot', 'subscriber_notes', 'subscriber_meta',
+  'campaign_emails', 'url_stores', 'campaign_url_metrics',
+  'funnel_sequences', 'funnel_subscribers', 'funnel_metrics',
+];
+const STAT_LABELS = {
+  subscribers:          'Subscribers',
+  companies:            'Companies',
+  lists:                'Lists',
+  tags:                 'Tags',
+  campaigns:            'Campaigns',
+  funnels:              'Funnels',
+  subscriber_pivot:     'Relationships',
+  subscriber_notes:     'Notes',
+  subscriber_meta:      'Meta',
+  campaign_emails:      'Emails',
+  url_stores:           'Tracked URLs',
+  campaign_url_metrics: 'URL Metrics',
+  funnel_sequences:     'Sequences',
+  funnel_subscribers:   'Enrollments',
+  funnel_metrics:       'Metrics',
+};
+
+// ── Lifecycle ────────────────────────────────────────────────────────────────
 onMounted(async () => {
-  try {
-    const data   = await get('/plugins');
-    const plugin = (data.plugins ?? []).find(p => p.id === 'fluent-crm');
+  // Load plugin metadata and live table counts in parallel
+  const [pluginRes, statsRes] = await Promise.allSettled([
+    get('/plugins'),
+    get('/seed/fluent-crm/stats'),
+  ]);
 
+  if (pluginRes.status === 'fulfilled') {
+    const plugin = (pluginRes.value.plugins ?? []).find(p => p.id === 'fluent-crm');
     if (plugin) {
       sections.value = plugin.sections ?? [];
       for (const section of sections.value) {
@@ -105,25 +167,39 @@ onMounted(async () => {
         }
       }
     }
-  } catch {
-    // leave sections empty; form will be empty
-  } finally {
-    loading.value = false;
   }
+
+  if (statsRes.status === 'fulfilled') {
+    stats.value = statsRes.value.counts ?? null;
+  }
+
+  loading.value = false;
 });
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+async function refreshStats() {
+  try {
+    const data  = await get('/seed/fluent-crm/stats');
+    stats.value = data.counts ?? null;
+  } catch {
+    // non-fatal — stats card just keeps its previous values
+  }
+}
+
+// ── Actions ──────────────────────────────────────────────────────────────────
 async function runSeed() {
   running.value       = true;
   runningAction.value = 'seed';
   resultMode.value    = 'seed';
 
   try {
-    const data = await post('/seed/fluent-crm', { ...form });
+    const data   = await post('/seed/fluent-crm', { ...form });
     result.value = {
       success: data.success ?? true,
       seeded:  data.seeded  ?? {},
       errors:  data.errors  ?? [],
     };
+    await refreshStats();
   } catch (e) {
     result.value = { success: false, seeded: {}, errors: [e.message] };
   } finally {
@@ -139,12 +215,13 @@ async function runTruncate() {
   resultMode.value    = 'truncate';
 
   try {
-    const data = await del('/seed/fluent-crm');
+    const data   = await del('/seed/fluent-crm');
     result.value = {
       success: data.success   ?? true,
       seeded:  data.truncated ?? {},
       errors:  data.errors    ?? [],
     };
+    await refreshStats();
   } catch (e) {
     result.value = { success: false, seeded: {}, errors: [e.message] };
   } finally {

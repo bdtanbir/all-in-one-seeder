@@ -22,6 +22,7 @@ use WP_REST_Response;
 
 class FluentCrmController
 {
+    /** Default count per field when not supplied in the request body. */
     private const DEFAULTS = [
         'companies'        => 10,
         'lists'            => 5,
@@ -34,60 +35,126 @@ class FluentCrmController
         'funnel_sequences' => 5,
     ];
 
+    /** Hard ceiling on any single count to prevent runaway inserts. */
+    private const MAX_COUNT = 5000;
+
+    /**
+     * fc_* table suffixes (without wp_ prefix) used by the stats endpoint.
+     */
+    private const FC_TABLES = [
+        'companies'            => 'fc_companies',
+        'lists'                => 'fc_lists',
+        'tags'                 => 'fc_tags',
+        'subscribers'          => 'fc_subscribers',
+        'subscriber_pivot'     => 'fc_subscriber_pivot',
+        'subscriber_notes'     => 'fc_subscriber_notes',
+        'subscriber_meta'      => 'fc_subscriber_meta',
+        'campaigns'            => 'fc_campaigns',
+        'campaign_emails'      => 'fc_campaign_emails',
+        'url_stores'           => 'fc_url_stores',
+        'campaign_url_metrics' => 'fc_campaign_url_metrics',
+        'funnels'              => 'fc_funnels',
+        'funnel_sequences'     => 'fc_funnel_sequences',
+        'funnel_subscribers'   => 'fc_funnel_subscribers',
+        'funnel_metrics'       => 'fc_funnel_metrics',
+    ];
+
+    // -------------------------------------------------------------------------
+    // Public route handlers
+    // -------------------------------------------------------------------------
+
     /**
      * POST /aio-seeder/v1/seed/fluent-crm
-     *
-     * Runs all FluentCRM seeders in dependency order.
-     * Seeder classes are wired in Phase 3; this controller
-     * already owns request parsing and the response contract.
      */
     public function seed(WP_REST_Request $request): WP_REST_Response
     {
         @set_time_limit(300);
 
+        if ($guard = $this->guardFluentCrmActive()) {
+            return $guard;
+        }
+
         $params = $this->parseParams($request);
-        $seeded = [];
-        $errors = [];
 
         try {
-            $seeded = $this->runSeeders($params);
+            ['seeded' => $seeded, 'errors' => $errors] = $this->runSeeders($params);
         } catch (\Throwable $e) {
-            $errors[] = $e->getMessage();
+            return new WP_REST_Response([
+                'success' => false,
+                'seeded'  => [],
+                'errors'  => [$e->getMessage()],
+            ], 500);
         }
 
         return new WP_REST_Response([
             'success' => empty($errors),
             'seeded'  => $seeded,
             'errors'  => $errors,
-        ], empty($errors) ? 200 : 500);
+        ], 200);
     }
 
     /**
      * DELETE /aio-seeder/v1/seed/fluent-crm
-     *
-     * Truncates all fc_* tables. Implemented in Phase 3.
      */
     public function truncate(WP_REST_Request $request): WP_REST_Response
     {
-        $truncated = [];
-        $errors    = [];
+        if ($guard = $this->guardFluentCrmActive()) {
+            return $guard;
+        }
 
         try {
-            $truncated = $this->runTruncate();
+            ['truncated' => $truncated, 'errors' => $errors] = $this->runTruncate();
         } catch (\Throwable $e) {
-            $errors[] = $e->getMessage();
+            return new WP_REST_Response([
+                'success'   => false,
+                'truncated' => [],
+                'errors'    => [$e->getMessage()],
+            ], 500);
         }
 
         return new WP_REST_Response([
             'success'   => empty($errors),
             'truncated' => $truncated,
             'errors'    => $errors,
-        ], empty($errors) ? 200 : 500);
+        ], 200);
+    }
+
+    /**
+     * GET /aio-seeder/v1/seed/fluent-crm/stats
+     *
+     * Returns current row counts for every fc_* table.
+     */
+    public function stats(WP_REST_Request $request): WP_REST_Response
+    {
+        if ($guard = $this->guardFluentCrmActive()) {
+            return $guard;
+        }
+
+        return new WP_REST_Response([
+            'success' => true,
+            'counts'  => $this->tableCounts(),
+        ], 200);
     }
 
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
+
+    /**
+     * Returns a 422 response if FluentCRM is not active, null otherwise.
+     */
+    private function guardFluentCrmActive(): ?WP_REST_Response
+    {
+        if (!defined('FLUENTCRM')) {
+            return new WP_REST_Response([
+                'success' => false,
+                'seeded'  => [],
+                'errors'  => ['FluentCRM plugin is not installed or activated.'],
+            ], 422);
+        }
+
+        return null;
+    }
 
     private function parseParams(WP_REST_Request $request): array
     {
@@ -96,55 +163,60 @@ class FluentCrmController
 
         foreach (self::DEFAULTS as $key => $default) {
             $raw          = $body[$key] ?? $default;
-            $params[$key] = max(0, (int) $raw);
+            $params[$key] = min(self::MAX_COUNT, max(0, (int) $raw));
         }
 
         return $params;
     }
 
     /**
-     * Runs each seeder in FK-dependency order and collects inserted counts.
+     * Runs each seeder step with individual try/catch so a single failure
+     * does not abort the remaining steps.
      *
      * @param  array<string,int> $params
-     * @return array<string,int>
+     * @return array{seeded: array<string,int>, errors: string[]}
      */
     private function runSeeders(array $params): array
     {
+        $urlCount = max(5, $params['campaigns'] * 3);
+
+        $steps = [
+            'companies'            => fn () => (new CompanySeeder())->seed($params['companies']),
+            'lists'                => fn () => (new ListSeeder())->seed($params['lists']),
+            'tags'                 => fn () => (new TagSeeder())->seed($params['tags']),
+            'subscribers'          => fn () => (new SubscriberSeeder())->seed($params['subscribers']),
+            'subscriber_pivot'     => fn () => (new SubscriberPivotSeeder())->seed(0),
+            'subscriber_notes'     => fn () => (new SubscriberNoteSeeder())->seed($params['subscriber_notes']),
+            'subscriber_meta'      => fn () => (new SubscriberMetaSeeder())->seed($params['subscriber_meta']),
+            'campaigns'            => fn () => (new CampaignSeeder())->seed($params['campaigns']),
+            'campaign_emails'      => fn () => (new CampaignEmailSeeder())->seed(0),
+            'url_stores'           => fn () => (new UrlStoreSeeder())->seed($urlCount),
+            'campaign_url_metrics' => fn () => (new CampaignUrlMetricSeeder())->seed(0),
+            'funnels'              => fn () => (new FunnelSeeder())->seed($params['funnels']),
+            'funnel_sequences'     => fn () => (new FunnelSequenceSeeder())->seed($params['funnel_sequences']),
+            'funnel_subscribers'   => fn () => (new FunnelSubscriberSeeder())->seed(0),
+            'funnel_metrics'       => fn () => (new FunnelMetricSeeder())->seed(0),
+        ];
+
         $seeded = [];
+        $errors = [];
 
-        // --- Standalone tables (no FK deps) ---
-        $seeded['companies'] = (new CompanySeeder())->seed($params['companies']);
-        $seeded['lists']     = (new ListSeeder())->seed($params['lists']);
-        $seeded['tags']      = (new TagSeeder())->seed($params['tags']);
+        foreach ($steps as $key => $fn) {
+            try {
+                $seeded[$key] = $fn();
+            } catch (\Throwable $e) {
+                $seeded[$key] = 0;
+                $errors[]     = "[{$key}] " . $e->getMessage();
+            }
+        }
 
-        // --- Subscribers (depends on companies) ---
-        $seeded['subscribers']      = (new SubscriberSeeder())->seed($params['subscribers']);
-        $seeded['subscriber_pivot'] = (new SubscriberPivotSeeder())->seed(0);
-        $seeded['subscriber_notes'] = (new SubscriberNoteSeeder())->seed($params['subscriber_notes']);
-        $seeded['subscriber_meta']  = (new SubscriberMetaSeeder())->seed($params['subscriber_meta']);
-
-        // --- Campaigns (depends on lists, tags, subscribers) ---
-        $seeded['campaigns']      = (new CampaignSeeder())->seed($params['campaigns']);
-        $seeded['campaign_emails'] = (new CampaignEmailSeeder())->seed(0);
-
-        // --- URL tracking (depends on campaigns + subscribers) ---
-        $urlCount                         = max(5, $params['campaigns'] * 3);
-        $seeded['url_stores']             = (new UrlStoreSeeder())->seed($urlCount);
-        $seeded['campaign_url_metrics']   = (new CampaignUrlMetricSeeder())->seed(0);
-
-        // --- Funnels (depends on subscribers) ---
-        $seeded['funnels']            = (new FunnelSeeder())->seed($params['funnels']);
-        $seeded['funnel_sequences']   = (new FunnelSequenceSeeder())->seed($params['funnel_sequences']);
-        $seeded['funnel_subscribers'] = (new FunnelSubscriberSeeder())->seed(0);
-        $seeded['funnel_metrics']     = (new FunnelMetricSeeder())->seed(0);
-
-        return $seeded;
+        return ['seeded' => $seeded, 'errors' => $errors];
     }
 
     /**
-     * Truncates all fc_* tables in reverse FK-dependency order.
+     * Truncates tables in reverse FK order, isolating each step.
      *
-     * @return array<string,bool>
+     * @return array{truncated: array<string,bool>, errors: string[]}
      */
     private function runTruncate(): array
     {
@@ -167,12 +239,41 @@ class FluentCrmController
         ];
 
         $truncated = [];
+        $errors    = [];
 
         foreach ($seeders as $key => $seeder) {
-            $seeder->truncate();
-            $truncated[$key] = true;
+            try {
+                $seeder->truncate();
+                $truncated[$key] = true;
+            } catch (\Throwable $e) {
+                $truncated[$key] = false;
+                $errors[]        = "[{$key}] " . $e->getMessage();
+            }
         }
 
-        return $truncated;
+        return ['truncated' => $truncated, 'errors' => $errors];
+    }
+
+    /**
+     * Returns a COUNT(*) for every fc_* table, returning 0 for non-existent tables.
+     *
+     * @return array<string,int>
+     */
+    private function tableCounts(): array
+    {
+        global $wpdb;
+
+        $counts = [];
+
+        $wpdb->suppress_errors(true);
+
+        foreach (self::FC_TABLES as $key => $suffix) {
+            $table      = $wpdb->prefix . $suffix;
+            $counts[$key] = (int) ($wpdb->get_var("SELECT COUNT(*) FROM `{$table}`") ?? 0);
+        }
+
+        $wpdb->suppress_errors(false);
+
+        return $counts;
     }
 }

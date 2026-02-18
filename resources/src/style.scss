@@ -382,3 +382,71 @@ $danger-hover: #b91c1c;
     color: #991b1b;
   }
 }
+
+// ── Stats card ────────────────────────────────────────────────────────────────
+.aios-stats-card {
+  @extend %card;
+  margin-bottom: 24px;
+
+  &__title {
+    margin: 0 0 16px;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: $text-muted;
+    border-bottom: 1px solid $panel-border;
+    padding-bottom: 10px;
+  }
+}
+
+.aios-stats-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 28px;
+  margin-bottom: 4px;
+
+  &--sm { gap: 12px 20px; }
+}
+
+.aios-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 80px;
+
+  &__count {
+    font-size: 22px;
+    font-weight: 700;
+    color: $ink;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__label {
+    font-size: 12px;
+    color: $text-muted;
+    font-weight: 500;
+  }
+
+  &--sm {
+    .aios-stat__count { font-size: 16px; }
+  }
+}
+
+.aios-stats-detail {
+  margin-top: 16px;
+  border-top: 1px solid $panel-border;
+  padding-top: 14px;
+
+  summary {
+    font-size: 13px;
+    font-weight: 600;
+    color: $text-muted;
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 12px;
+
+    &:hover { color: $body-copy; }
+  }
+}
