@@ -6,6 +6,7 @@ use AllInOneSeeder\App\Seeders\FluentCRM\CampaignEmailSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\CampaignSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\CampaignUrlMetricSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\CompanySeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\EmailSequenceSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\FunnelMetricSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\FunnelSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\FunnelSequenceSeeder;
@@ -33,6 +34,7 @@ class FluentCrmController
         'subscriber_meta'  => 3,
         'campaigns'        => 5,
         'recurring_campaigns' => 3,
+        'email_sequences'  => 3,
         'funnels'          => 3,
         'funnel_sequences' => 5,
     ];
@@ -52,6 +54,8 @@ class FluentCrmController
         'subscriber_notes'     => 'fc_subscriber_notes',
         'subscriber_meta'      => 'fc_subscriber_meta',
         'campaigns'            => 'fc_campaigns',
+        'recurring_campaigns'  => 'fc_campaigns',
+        'email_sequences'      => 'fc_campaigns',
         'campaign_emails'      => 'fc_campaign_emails',
         'url_stores'           => 'fc_url_stores',
         'campaign_url_metrics' => 'fc_campaign_url_metrics',
@@ -192,6 +196,7 @@ class FluentCrmController
             'subscriber_meta'      => fn () => (new SubscriberMetaSeeder())->seed($params['subscriber_meta']),
             'campaigns'            => fn () => (new CampaignSeeder())->seed($params['campaigns']),
             'recurring_campaigns'  => fn () => (new RecurringCampaignSeeder())->seed($params['recurring_campaigns']),
+            'email_sequences'      => fn () => (new EmailSequenceSeeder())->seed($params['email_sequences']),
             'campaign_emails'      => fn () => (new CampaignEmailSeeder())->seed(0),
             'url_stores'           => fn () => (new UrlStoreSeeder())->seed($urlCount),
             'campaign_url_metrics' => fn () => (new CampaignUrlMetricSeeder())->seed(0),
@@ -275,6 +280,10 @@ class FluentCrmController
             if ($key === 'campaigns') {
                 // Match FluentCRM email campaigns list (exclude funnel/internal campaign rows).
                 $sql = "SELECT COUNT(*) FROM `{$table}` WHERE `type` = 'campaign'";
+            } elseif ($key === 'recurring_campaigns') {
+                $sql = "SELECT COUNT(*) FROM `{$table}` WHERE `type` = 'recurring_campaign'";
+            } elseif ($key === 'email_sequences') {
+                $sql = "SELECT COUNT(*) FROM `{$table}` WHERE `type` = 'email_sequence'";
             } elseif ($key === 'funnels') {
                 // Match FluentCRM automation funnels list.
                 $sql = "SELECT COUNT(*) FROM `{$table}` WHERE `type` = 'funnels'";

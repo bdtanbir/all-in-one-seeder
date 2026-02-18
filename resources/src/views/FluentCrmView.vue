@@ -127,6 +127,7 @@ const MAIN_STAT_KEYS = [
   'subscribers', 'companies', 'lists', 'tags', 'campaigns', 'funnels',
 ];
 const DERIVED_STAT_KEYS = [
+  'recurring_campaigns', 'email_sequences',
   'subscriber_pivot', 'subscriber_notes', 'subscriber_meta',
   'campaign_emails', 'url_stores', 'campaign_url_metrics',
   'funnel_sequences', 'funnel_subscribers', 'funnel_metrics',
@@ -137,6 +138,8 @@ const STAT_LABELS = {
   lists:                'Lists',
   tags:                 'Tags',
   campaigns:            'Campaigns',
+  recurring_campaigns:  'Recurring Campaigns',
+  email_sequences:      'Email Sequences',
   funnels:              'Funnels',
   subscriber_pivot:     'Relationships',
   subscriber_notes:     'Notes',

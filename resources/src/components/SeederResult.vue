@@ -72,6 +72,7 @@ const TABLE_LABELS = {
   subscriber_meta:      'Subscriber Meta',
   campaigns:            'Campaigns',
   recurring_campaigns:  'Recurring Campaigns',
+  email_sequences:      'Email Sequences',
   campaign_emails:      'Campaign Emails',
   url_stores:           'Tracked URLs',
   campaign_url_metrics: 'URL Click Metrics',

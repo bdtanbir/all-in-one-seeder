@@ -66,6 +66,7 @@ class RestApi
             'subscriber_meta'    => $intArg,
             'campaigns'          => $intArg,
             'recurring_campaigns' => $intArg,
+            'email_sequences'    => $intArg,
             'funnels'            => $intArg,
             'funnel_sequences'   => $intArg,
         ];
