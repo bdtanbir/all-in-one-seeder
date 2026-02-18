@@ -82,13 +82,19 @@ class SubscriberMetaSeeder extends AbstractSeeder
 
     private function metaValue(string $key): string
     {
-        return match ($key) {
-            '_source_form_id'  => (string) rand(1, 50),
-            '_last_campaign'   => (string) rand(1, 20),
-            '_custom_score'    => (string) rand(0, 100),
-            '_signup_page'     => FakeData::url(),
-            '_referral_source' => FakeData::source(),
-            default            => FakeData::sentence(3),
-        };
+        switch ($key) {
+            case '_source_form_id':
+                return (string) rand(1, 50);
+            case '_last_campaign':
+                return (string) rand(1, 20);
+            case '_custom_score':
+                return (string) rand(0, 100);
+            case '_signup_page':
+                return FakeData::url();
+            case '_referral_source':
+                return FakeData::source();
+            default:
+                return FakeData::sentence(3);
+        }
     }
 }

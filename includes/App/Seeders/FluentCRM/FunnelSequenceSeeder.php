@@ -67,14 +67,21 @@ class FunnelSequenceSeeder extends AbstractSeeder
 
     private function actionSettings(string $action): array
     {
-        return match ($action) {
-            'send_email'              => ['email_subject' => FakeData::emailSubject(), 'email_body' => ''],
-            'wait'                    => ['wait_type' => 'delay'],
-            'add_tag', 'remove_tag'   => ['tag_ids' => []],
-            'add_to_list',
-            'remove_from_list'        => ['list_ids' => []],
-            'update_contact_property' => ['property' => 'status', 'value' => 'subscribed'],
-            default                   => [],
-        };
+        switch ($action) {
+            case 'send_email':
+                return ['email_subject' => FakeData::emailSubject(), 'email_body' => ''];
+            case 'wait':
+                return ['wait_type' => 'delay'];
+            case 'add_tag':
+            case 'remove_tag':
+                return ['tag_ids' => []];
+            case 'add_to_list':
+            case 'remove_from_list':
+                return ['list_ids' => []];
+            case 'update_contact_property':
+                return ['property' => 'status', 'value' => 'subscribed'];
+            default:
+                return [];
+        }
     }
 }

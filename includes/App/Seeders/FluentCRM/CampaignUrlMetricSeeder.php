@@ -15,7 +15,7 @@ class CampaignUrlMetricSeeder extends AbstractSeeder
     }
 
     /**
-     * Creates click/view metrics for sent campaigns.
+     * Creates click/view metrics for completed/in-flight campaigns.
      * $count is not used — derived from existing records.
      */
     public function seed(int $count): int
@@ -24,7 +24,7 @@ class CampaignUrlMetricSeeder extends AbstractSeeder
 
         $urlIds        = $this->fetchIds($this->db->prefix . 'fc_url_stores');
         $subscriberIds = $this->fetchIds($this->db->prefix . 'fc_subscribers');
-        $campaignIds   = $this->fetchSentCampaignIds();
+        $campaignIds   = $this->fetchTrackableCampaignIds();
 
         if (empty($urlIds) || empty($campaignIds) || empty($subscriberIds)) {
             return 0;
@@ -74,13 +74,15 @@ class CampaignUrlMetricSeeder extends AbstractSeeder
         $this->truncateTable($this->table);
     }
 
-    private function fetchSentCampaignIds(): array
+    private function fetchTrackableCampaignIds(): array
     {
         $table = $this->db->prefix . 'fc_campaigns';
 
         return array_map(
             'intval',
-            $this->db->get_col("SELECT id FROM `{$table}` WHERE status = 'sent'") ?: []
+            $this->db->get_col(
+                "SELECT id FROM `{$table}` WHERE status IN ('archived', 'working')"
+            ) ?: []
         );
     }
 }

@@ -192,7 +192,7 @@ abstract class AbstractSeeder
     /**
      * Return a random element from an array.
      */
-    protected function randomElement(array $arr): mixed
+    protected function randomElement(array $arr)
     {
         return $arr[array_rand($arr)];
     }

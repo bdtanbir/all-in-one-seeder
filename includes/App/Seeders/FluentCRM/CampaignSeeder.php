@@ -23,10 +23,13 @@ class CampaignSeeder extends AbstractSeeder
 
         for ($i = 0; $i < $count; $i++) {
             $title  = FakeData::campaignTitle();
+            // FluentCRM campaign statuses (campaigns are not marked as "sent").
             $status = $this->weightedRandom([
-                'sent'      => 50,
-                'draft'     => 30,
-                'scheduled' => 20,
+                'draft'     => 40,
+                'scheduled' => 25,
+                'working'   => 15,
+                'paused'    => 10,
+                'archived'  => 10,
             ]);
 
             $settings = [
@@ -35,7 +38,7 @@ class CampaignSeeder extends AbstractSeeder
                 'sending_filter' => 'list_tag',
             ];
 
-            $scheduledAt = $status === 'scheduled'
+            $scheduledAt = in_array($status, ['scheduled', 'paused'], true)
                 ? $this->randDate('now', '+30 days')
                 : $this->randDate('-6 months', 'now');
 

@@ -35,15 +35,11 @@ class CampaignEmailSeeder extends AbstractSeeder
         $rows = [];
 
         foreach ($campaigns as $campaign) {
-            $isSent  = ($campaign['status'] === 'sent');
             $baseTs  = (int) strtotime($campaign['scheduled_at'] ?? '-1 month');
 
             foreach ($subscribers as $sub) {
-                $status = $isSent
-                    ? $this->weightedRandom(['sent' => 80, 'bounced' => 10, 'failed' => 10])
-                    : $this->weightedRandom(['scheduled' => 70, 'pending' => 30]);
-
-                $isOpen = ($isSent && rand(1, 100) <= 40) ? 1 : 0;
+                $status = $this->emailStatusForCampaign((string) ($campaign['status'] ?? 'draft'));
+                $isOpen = (in_array($status, ['sent', 'bounced', 'failed'], true) && rand(1, 100) <= 40) ? 1 : 0;
 
                 $rows[] = [
                     'campaign_id'   => (int) $campaign['id'],
@@ -97,5 +93,21 @@ class CampaignEmailSeeder extends AbstractSeeder
             "SELECT id, email FROM `{$table}`",
             ARRAY_A
         ) ?: [];
+    }
+
+    private function emailStatusForCampaign(string $campaignStatus): string
+    {
+        switch ($campaignStatus) {
+            case 'archived':
+                return $this->weightedRandom(['sent' => 82, 'bounced' => 9, 'failed' => 9]);
+            case 'working':
+                return $this->weightedRandom(['sent' => 45, 'pending' => 25, 'scheduled' => 20, 'processing' => 10]);
+            case 'paused':
+                return $this->weightedRandom(['paused' => 55, 'scheduled' => 30, 'pending' => 15]);
+            case 'scheduled':
+                return $this->weightedRandom(['scheduled' => 70, 'pending' => 30]);
+            default:
+                return 'draft';
+        }
     }
 }
