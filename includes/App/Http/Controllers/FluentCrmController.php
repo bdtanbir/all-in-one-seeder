@@ -11,6 +11,7 @@ use AllInOneSeeder\App\Seeders\FluentCRM\FunnelSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\FunnelSequenceSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\FunnelSubscriberSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\ListSeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\RecurringCampaignSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\SubscriberMetaSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\SubscriberNoteSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\SubscriberPivotSeeder;
@@ -31,6 +32,7 @@ class FluentCrmController
         'subscriber_notes' => 2,
         'subscriber_meta'  => 3,
         'campaigns'        => 5,
+        'recurring_campaigns' => 3,
         'funnels'          => 3,
         'funnel_sequences' => 5,
     ];
@@ -189,6 +191,7 @@ class FluentCrmController
             'subscriber_notes'     => fn () => (new SubscriberNoteSeeder())->seed($params['subscriber_notes']),
             'subscriber_meta'      => fn () => (new SubscriberMetaSeeder())->seed($params['subscriber_meta']),
             'campaigns'            => fn () => (new CampaignSeeder())->seed($params['campaigns']),
+            'recurring_campaigns'  => fn () => (new RecurringCampaignSeeder())->seed($params['recurring_campaigns']),
             'campaign_emails'      => fn () => (new CampaignEmailSeeder())->seed(0),
             'url_stores'           => fn () => (new UrlStoreSeeder())->seed($urlCount),
             'campaign_url_metrics' => fn () => (new CampaignUrlMetricSeeder())->seed(0),

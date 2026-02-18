@@ -80,7 +80,7 @@ class CampaignEmailSeeder extends AbstractSeeder
         $table = $this->db->prefix . 'fc_campaigns';
 
         return $this->db->get_results(
-            "SELECT id, status, email_subject, scheduled_at, created_at FROM `{$table}`",
+            "SELECT id, status, email_subject, scheduled_at, created_at FROM `{$table}` WHERE type = 'campaign'",
             ARRAY_A
         ) ?: [];
     }

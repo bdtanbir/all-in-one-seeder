@@ -37,7 +37,8 @@ class PluginsController
                         [
                             'label'  => 'Email Campaigns',
                             'fields' => [
-                                ['key' => 'campaigns', 'label' => 'Campaigns', 'default' => 5],
+                                ['key' => 'campaigns',           'label' => 'Campaigns',           'default' => 5],
+                                ['key' => 'recurring_campaigns', 'label' => 'Recurring Campaigns', 'default' => 3],
                             ],
                         ],
                         [

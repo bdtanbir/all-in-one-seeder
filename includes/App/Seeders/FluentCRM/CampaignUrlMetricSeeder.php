@@ -81,7 +81,7 @@ class CampaignUrlMetricSeeder extends AbstractSeeder
         return array_map(
             'intval',
             $this->db->get_col(
-                "SELECT id FROM `{$table}` WHERE status IN ('archived', 'working')"
+                "SELECT id FROM `{$table}` WHERE type = 'campaign' AND status IN ('archived', 'working')"
             ) ?: []
         );
     }
