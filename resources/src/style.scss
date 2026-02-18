@@ -1,0 +1,62 @@
+:root {
+  color-scheme: light;
+}
+
+$ink: #111827;
+$text-muted: #4b5563;
+$body-copy: #374151;
+$panel-border: #e5e7eb;
+$primary: #1d4ed8;
+$primary-hover: #1e40af;
+
+.aios-app {
+  margin-top: 20px;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  color: $ink;
+}
+
+.aios-header {
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 8px 0 0;
+    color: $text-muted;
+  }
+}
+
+.aios-card {
+  margin-top: 24px;
+  background: #fff;
+  border: 1px solid $panel-border;
+  border-radius: 10px;
+  padding: 24px;
+  max-width: 680px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  h2 {
+    margin: 0 0 10px;
+  }
+
+  p {
+    margin: 0 0 16px;
+    color: $body-copy;
+  }
+}
+
+.aios-btn {
+  border: 0;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: $primary;
+  color: #fff;
+  font-weight: 600;
+
+  &:hover {
+    background: $primary-hover;
+  }
+}
