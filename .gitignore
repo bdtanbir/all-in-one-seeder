@@ -1,7 +1,8 @@
 
 
 refs/
-builds/
+builds/*
+!builds/.gitkeep
 node_modules/
 assets/*
 !assets/.gitkeep
