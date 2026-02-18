@@ -2,6 +2,21 @@
 
 namespace AllInOneSeeder\App\Http\Controllers;
 
+use AllInOneSeeder\App\Seeders\FluentCRM\CampaignEmailSeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\CampaignSeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\CampaignUrlMetricSeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\CompanySeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\FunnelMetricSeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\FunnelSeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\FunnelSequenceSeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\FunnelSubscriberSeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\ListSeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\SubscriberMetaSeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\SubscriberNoteSeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\SubscriberPivotSeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\SubscriberSeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\TagSeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\UrlStoreSeeder;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -89,33 +104,75 @@ class FluentCrmController
 
     /**
      * Runs each seeder in FK-dependency order and collects inserted counts.
-     * Seeder classes are added here as they are implemented in Phase 3.
      *
      * @param  array<string,int> $params
      * @return array<string,int>
      */
     private function runSeeders(array $params): array
     {
-        // Phase 3 will populate this method with seeder calls, e.g.:
-        //
-        //   $companySeeder = new \AllInOneSeeder\App\Seeders\FluentCRM\CompanySeeder();
-        //   $seeded['companies'] = $companySeeder->seed($params['companies']);
-        //   ...
-        //
-        // Returning an empty array until seeders are implemented.
+        $seeded = [];
 
-        return [];
+        // --- Standalone tables (no FK deps) ---
+        $seeded['companies'] = (new CompanySeeder())->seed($params['companies']);
+        $seeded['lists']     = (new ListSeeder())->seed($params['lists']);
+        $seeded['tags']      = (new TagSeeder())->seed($params['tags']);
+
+        // --- Subscribers (depends on companies) ---
+        $seeded['subscribers']      = (new SubscriberSeeder())->seed($params['subscribers']);
+        $seeded['subscriber_pivot'] = (new SubscriberPivotSeeder())->seed(0);
+        $seeded['subscriber_notes'] = (new SubscriberNoteSeeder())->seed($params['subscriber_notes']);
+        $seeded['subscriber_meta']  = (new SubscriberMetaSeeder())->seed($params['subscriber_meta']);
+
+        // --- Campaigns (depends on lists, tags, subscribers) ---
+        $seeded['campaigns']      = (new CampaignSeeder())->seed($params['campaigns']);
+        $seeded['campaign_emails'] = (new CampaignEmailSeeder())->seed(0);
+
+        // --- URL tracking (depends on campaigns + subscribers) ---
+        $urlCount                         = max(5, $params['campaigns'] * 3);
+        $seeded['url_stores']             = (new UrlStoreSeeder())->seed($urlCount);
+        $seeded['campaign_url_metrics']   = (new CampaignUrlMetricSeeder())->seed(0);
+
+        // --- Funnels (depends on subscribers) ---
+        $seeded['funnels']            = (new FunnelSeeder())->seed($params['funnels']);
+        $seeded['funnel_sequences']   = (new FunnelSequenceSeeder())->seed($params['funnel_sequences']);
+        $seeded['funnel_subscribers'] = (new FunnelSubscriberSeeder())->seed(0);
+        $seeded['funnel_metrics']     = (new FunnelMetricSeeder())->seed(0);
+
+        return $seeded;
     }
 
     /**
-     * Truncates all fc_* tables in reverse dependency order.
-     * Implemented in Phase 3.
+     * Truncates all fc_* tables in reverse FK-dependency order.
      *
      * @return array<string,bool>
      */
     private function runTruncate(): array
     {
-        // Phase 3 will populate this method.
-        return [];
+        $seeders = [
+            'funnel_metrics'        => new FunnelMetricSeeder(),
+            'funnel_subscribers'    => new FunnelSubscriberSeeder(),
+            'funnel_sequences'      => new FunnelSequenceSeeder(),
+            'funnels'               => new FunnelSeeder(),
+            'campaign_url_metrics'  => new CampaignUrlMetricSeeder(),
+            'url_stores'            => new UrlStoreSeeder(),
+            'campaign_emails'       => new CampaignEmailSeeder(),
+            'campaigns'             => new CampaignSeeder(),
+            'subscriber_meta'       => new SubscriberMetaSeeder(),
+            'subscriber_notes'      => new SubscriberNoteSeeder(),
+            'subscriber_pivot'      => new SubscriberPivotSeeder(),
+            'subscribers'           => new SubscriberSeeder(),
+            'tags'                  => new TagSeeder(),
+            'lists'                 => new ListSeeder(),
+            'companies'             => new CompanySeeder(),
+        ];
+
+        $truncated = [];
+
+        foreach ($seeders as $key => $seeder) {
+            $seeder->truncate();
+            $truncated[$key] = true;
+        }
+
+        return $truncated;
     }
 }

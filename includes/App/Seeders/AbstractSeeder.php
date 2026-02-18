@@ -198,6 +198,22 @@ abstract class AbstractSeeder
     }
 
     /**
+     * Return $n unique random elements from $arr (re-indexed).
+     *
+     * @return array
+     */
+    protected function randomSample(array $arr, int $n): array
+    {
+        if ($n >= count($arr)) {
+            return array_values($arr);
+        }
+
+        shuffle($arr);
+
+        return array_slice($arr, 0, $n);
+    }
+
+    /**
      * Weighted random selection.
      *
      * Example:
