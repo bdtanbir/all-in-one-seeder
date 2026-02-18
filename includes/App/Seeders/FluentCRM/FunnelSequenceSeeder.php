@@ -2,13 +2,21 @@
 
 namespace AllInOneSeeder\App\Seeders\FluentCRM;
 
-use AllInOneSeeder\App\Factories\FakeData;
 use AllInOneSeeder\App\Seeders\AbstractSeeder;
 
 class FunnelSequenceSeeder extends AbstractSeeder
 {
-    /** Delay options in seconds: 0, 1h, 1d, 2d, 3d, 7d */
-    private const DELAYS = [0, 3600, 86400, 172800, 259200, 604800];
+    /**
+     * Core FluentCRM action names that exist in free installs.
+     * We avoid integration-specific actions to keep seeded data portable.
+     */
+    private const ACTIONS = [
+        'fluentcrm_wait_times',
+        'add_contact_to_tag',
+        'detach_contact_from_tag',
+        'add_contact_to_list',
+        'detach_contact_from_list',
+    ];
 
     public function __construct()
     {
@@ -34,21 +42,23 @@ class FunnelSequenceSeeder extends AbstractSeeder
         }
 
         $adminId = $this->adminUserId();
+        $listIds = $this->fetchIds($this->db->prefix . 'fc_lists');
+        $tagIds  = $this->fetchIds($this->db->prefix . 'fc_tags');
 
         foreach ($funnelIds as $funnelId) {
             for ($seq = 1; $seq <= $count; $seq++) {
-                $action = FakeData::actionName();
+                $action = $this->randomElement(self::ACTIONS);
 
                 $this->insert([
                     'funnel_id'   => $funnelId,
                     'parent_id'   => 0,
                     'action_name' => $action,
-                    'type'        => 'sequence',
-                    'title'       => ucwords(str_replace('_', ' ', $action)) . ' — Step ' . $seq,
+                    'type'        => 'action',
+                    'title'       => ucwords(str_replace('_', ' ', $action)) . ' - Step ' . $seq,
                     'status'      => 'published',
                     'conditions'  => serialize([]),
-                    'settings'    => serialize($this->actionSettings($action)),
-                    'delay'       => $this->randomElement(self::DELAYS),
+                    'settings'    => serialize($this->actionSettings($action, $listIds, $tagIds)),
+                    'delay'       => $action === 'fluentcrm_wait_times' ? rand(3600, 604800) : 0,
                     'sequence'    => $seq,
                     'created_by'  => $adminId,
                     'created_at'  => $this->randDate('-1 year', 'now'),
@@ -65,21 +75,25 @@ class FunnelSequenceSeeder extends AbstractSeeder
         $this->truncateTable($this->table);
     }
 
-    private function actionSettings(string $action): array
+    private function actionSettings(string $action, array $listIds, array $tagIds): array
     {
         switch ($action) {
-            case 'send_email':
-                return ['email_subject' => FakeData::emailSubject(), 'email_body' => ''];
-            case 'wait':
-                return ['wait_type' => 'delay'];
-            case 'add_tag':
-            case 'remove_tag':
-                return ['tag_ids' => []];
-            case 'add_to_list':
-            case 'remove_from_list':
-                return ['list_ids' => []];
-            case 'update_contact_property':
-                return ['property' => 'status', 'value' => 'subscribed'];
+            case 'fluentcrm_wait_times':
+                return [
+                    'wait_type'         => 'unit_wait',
+                    'wait_time_amount'  => rand(1, 7),
+                    'wait_time_unit'    => $this->randomElement(['days', 'hours']),
+                    'is_timestamp_wait' => '',
+                    'wait_date_time'    => '',
+                    'to_day'            => [],
+                    'to_day_time'       => '',
+                ];
+            case 'add_contact_to_tag':
+            case 'detach_contact_from_tag':
+                return ['tags' => !empty($tagIds) ? [$this->randomElement($tagIds)] : []];
+            case 'add_contact_to_list':
+            case 'detach_contact_from_list':
+                return ['lists' => !empty($listIds) ? [$this->randomElement($listIds)] : []];
             default:
                 return [];
         }

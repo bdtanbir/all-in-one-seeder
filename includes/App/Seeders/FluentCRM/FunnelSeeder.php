@@ -17,16 +17,27 @@ class FunnelSeeder extends AbstractSeeder
     {
         $this->inserted = 0;
 
+        if ($count <= 0) {
+            return 0;
+        }
+
         $adminId = $this->adminUserId();
 
         for ($i = 0; $i < $count; $i++) {
             $this->insert([
-                'type'         => 'funnel',
+                // FluentCRM stores automation funnels as type "funnels" (plural).
+                'type'         => 'funnels',
                 'title'        => FakeData::funnelTitle() . ' ' . ($i + 1),
-                'trigger_name' => FakeData::triggerName(),
-                'status'       => $this->weightedRandom(['published' => 70, 'draft' => 30]),
-                'conditions'   => serialize([]),
-                'settings'     => serialize(['sendingFilter' => 'list_tag']),
+                // Keep trigger universally available in core FluentCRM.
+                'trigger_name' => 'user_register',
+                'status'       => $this->weightedRandom(['published' => 80, 'draft' => 20]),
+                'conditions'   => serialize([
+                    'update_type' => 'update',
+                    'user_roles'  => [],
+                ]),
+                'settings'     => serialize([
+                    'subscription_status' => 'subscribed',
+                ]),
                 'created_by'   => $adminId,
                 'created_at'   => $this->randDate('-1 year', 'now'),
                 'updated_at'   => $this->now(),
