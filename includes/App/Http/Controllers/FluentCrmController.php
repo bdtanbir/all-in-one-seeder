@@ -269,7 +269,17 @@ class FluentCrmController
 
         foreach (self::FC_TABLES as $key => $suffix) {
             $table      = $wpdb->prefix . $suffix;
-            $counts[$key] = (int) ($wpdb->get_var("SELECT COUNT(*) FROM `{$table}`") ?? 0);
+            if ($key === 'campaigns') {
+                // Match FluentCRM email campaigns list (exclude funnel/internal campaign rows).
+                $sql = "SELECT COUNT(*) FROM `{$table}` WHERE `type` = 'campaign'";
+            } elseif ($key === 'funnels') {
+                // Match FluentCRM automation funnels list.
+                $sql = "SELECT COUNT(*) FROM `{$table}` WHERE `type` = 'funnels'";
+            } else {
+                $sql = "SELECT COUNT(*) FROM `{$table}`";
+            }
+
+            $counts[$key] = (int) ($wpdb->get_var($sql) ?? 0);
         }
 
         $wpdb->suppress_errors(false);
