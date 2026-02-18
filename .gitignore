@@ -3,3 +3,9 @@
 refs/
 builds/
 node_modules/
+assets/*
+!assets/.gitkeep
+.DS_Store
+svn
+.idea
+
