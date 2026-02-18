@@ -2,61 +2,383 @@
   color-scheme: light;
 }
 
-$ink: #111827;
-$text-muted: #4b5563;
-$body-copy: #374151;
+// ── Palette ──────────────────────────────────────────────────────────────────
+$ink:          #111827;
+$text-muted:   #6b7280;
+$body-copy:    #374151;
 $panel-border: #e5e7eb;
-$primary: #1d4ed8;
-$primary-hover: #1e40af;
+$bg-page:      #f3f4f6;
+$bg-card:      #ffffff;
+$primary:      #1d4ed8;
+$primary-hover:#1e40af;
+$success:      #16a34a;
+$danger:       #dc2626;
+$danger-hover: #b91c1c;
 
+// ── Base ─────────────────────────────────────────────────────────────────────
 .aios-app {
   margin-top: 20px;
   font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
   color: $ink;
+  max-width: 960px;
 }
 
 .aios-header {
+  margin-bottom: 28px;
+
   h1 {
     margin: 0;
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 700;
+    color: $ink;
   }
 
   p {
-    margin: 8px 0 0;
+    margin: 6px 0 0;
     color: $text-muted;
+    font-size: 14px;
   }
 }
 
-.aios-card {
-  margin-top: 24px;
-  background: #fff;
+// ── Shared card shell ─────────────────────────────────────────────────────────
+%card {
+  background: $bg-card;
   border: 1px solid $panel-border;
   border-radius: 10px;
   padding: 24px;
-  max-width: 680px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
 
-  h2 {
-    margin: 0 0 10px;
+// ── Buttons ───────────────────────────────────────────────────────────────────
+.aios-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  padding: 9px 18px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  background: $primary;
+  color: #fff;
+  transition: background 0.15s;
+  line-height: 1.4;
+
+  &:hover:not(:disabled) { background: $primary-hover; }
+  &:disabled { opacity: .5; cursor: not-allowed; }
+
+  &--lg { padding: 11px 22px; font-size: 15px; }
+
+  &--sm { padding: 5px 12px; font-size: 13px; }
+
+  &--danger {
+    background: $danger;
+    &:hover:not(:disabled) { background: $danger-hover; }
   }
 
-  p {
-    margin: 0 0 16px;
+  &--outline {
+    background: transparent;
+    border: 1px solid $panel-border;
+    color: $body-copy;
+    &:hover:not(:disabled) { background: $bg-page; }
+  }
+}
+
+// ── Spinner ───────────────────────────────────────────────────────────────────
+@keyframes aios-spin { to { transform: rotate(360deg); } }
+
+.aios-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: aios-spin 0.65s linear infinite;
+  flex-shrink: 0;
+
+  &--sm { width: 14px; height: 14px; }
+
+  // Dark variant (used outside buttons)
+  &--dark {
+    border-color: $panel-border;
+    border-top-color: $primary;
+  }
+}
+
+.aios-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 0;
+  color: $text-muted;
+  font-size: 14px;
+
+  .aios-spinner { @extend .aios-spinner--dark; }
+}
+
+// ── Notices ───────────────────────────────────────────────────────────────────
+.aios-notice {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 20px;
+
+  &--error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+  }
+
+  &--success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+  }
+}
+
+.aios-note {
+  font-size: 13px;
+  color: $text-muted;
+  margin: 0 0 20px;
+  font-style: italic;
+}
+
+// ── Badges ────────────────────────────────────────────────────────────────────
+.aios-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+
+  &--active   { background: #dcfce7; color: #15803d; }
+  &--inactive { background: #f3f4f6; color: #6b7280; }
+}
+
+// ── Home view ─────────────────────────────────────────────────────────────────
+.aios-home {
+  &__subtitle {
+    margin: 0 0 20px;
+    color: $text-muted;
+    font-size: 14px;
+  }
+}
+
+.aios-plugin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.aios-plugin-card {
+  @extend %card;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow 0.15s, border-color 0.15s;
+
+  &:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); border-color: #d1d5db; }
+
+  &--inactive { opacity: .65; }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  &__name {
+    font-size: 16px;
+    font-weight: 700;
+    color: $ink;
+  }
+
+  &__desc {
+    margin: 0;
+    font-size: 13px;
+    color: $text-muted;
+    line-height: 1.55;
+    flex: 1;
+  }
+
+  &__foot {
+    margin-top: 4px;
+  }
+}
+
+// ── Plugin view (FluentCrmView) ───────────────────────────────────────────────
+.aios-plugin-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.aios-nav {
+  margin-bottom: 18px;
+}
+
+.aios-back-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: $primary;
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; }
+}
+
+.aios-view-title {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.aios-view-subtitle {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: $text-muted;
+}
+
+// ── Sections ──────────────────────────────────────────────────────────────────
+.aios-section {
+  @extend %card;
+  margin-bottom: 16px;
+
+  &__title {
+    margin: 0 0 18px;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: $text-muted;
+    border-bottom: 1px solid $panel-border;
+    padding-bottom: 10px;
+  }
+}
+
+.aios-field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+// ── Form fields ───────────────────────────────────────────────────────────────
+.aios-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 130px;
+
+  &__label {
+    font-size: 13px;
+    font-weight: 600;
     color: $body-copy;
   }
 }
 
-.aios-btn {
-  border: 0;
-  padding: 10px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  background: $primary;
-  color: #fff;
-  font-weight: 600;
+.aios-input {
+  width: 100px;
+  padding: 7px 10px;
+  border: 1px solid $panel-border;
+  border-radius: 6px;
+  font-size: 14px;
+  color: $ink;
+  background: $bg-card;
+  transition: border-color 0.15s, box-shadow 0.15s;
 
-  &:hover {
-    background: $primary-hover;
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba(29,78,216,.12);
+  }
+
+  // Hide number spin arrows for a cleaner look
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button { opacity: 1; }
+}
+
+// ── Action bar ────────────────────────────────────────────────────────────────
+.aios-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 20px 24px;
+  background: $bg-card;
+  border: 1px solid $panel-border;
+  border-radius: 10px;
+}
+
+// ── Result component ──────────────────────────────────────────────────────────
+.aios-result {
+  @extend %card;
+
+  &__banner {
+    padding: 12px 16px;
+    border-radius: 7px;
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 20px;
+
+    &--ok   { background: #f0fdf4; color: $success; border: 1px solid #bbf7d0; }
+    &--fail { background: #fef2f2; color: $danger;  border: 1px solid #fecaca; }
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin-bottom: 20px;
+
+    th, td {
+      padding: 9px 14px;
+      text-align: left;
+      border-bottom: 1px solid $panel-border;
+    }
+
+    th {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      color: $text-muted;
+      background: $bg-page;
+    }
+
+    tbody tr:hover td { background: $bg-page; }
+  }
+
+  &__num { text-align: right !important; font-variant-numeric: tabular-nums; }
+
+  &__total td {
+    font-weight: 700;
+    border-top: 2px solid $panel-border;
+    border-bottom: none;
+  }
+
+  &__cleared {
+    font-size: 14px;
+    color: $text-muted;
+    margin: 0 0 20px;
+  }
+
+  &__actions { margin-top: 4px; }
+}
+
+.aios-errors {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 7px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+
+  p {
+    margin: 4px 0;
+    font-size: 13px;
+    color: #991b1b;
   }
 }
