@@ -227,6 +227,62 @@ class FakeData
         'referral', 'social', 'email-campaign', 'manual',
     ];
 
+    // -- E-Commerce data pools ------------------------------------------------
+
+    private static array $productNames = [
+        // Tech
+        'Wireless Noise-Cancelling Headphones', 'Mechanical Keyboard',
+        '4K Ultra-Wide Monitor', 'USB-C Hub 7-in-1', 'Portable SSD 1TB',
+        'Smart Watch Series X', 'HD Webcam 1080p', 'LED Desk Lamp with USB',
+        'Ergonomic Mouse', 'Bluetooth Speaker Compact',
+        // Clothing
+        'Organic Cotton T-Shirt', 'Slim Fit Chino Trousers', 'Trail Running Shoes',
+        'High-Rise Yoga Pants', 'Classic Denim Jacket', 'Merino Wool Sweater',
+        'Waterproof Hiking Boots', 'Linen Button-Down Shirt',
+        // Home & Lifestyle
+        'Bamboo Cutting Board Set', 'Stainless Steel Water Bottle 32oz',
+        'Ceramic Coffee Mug', 'Scented Soy Candle', 'Memory Foam Pillow',
+        'Adjustable Standing Desk', 'Air Purifier Compact', 'Silicone Baking Mat',
+        // Books / Digital
+        'The Productivity Blueprint', 'Mastering Financial Freedom',
+        'Complete Guide to Healthy Living', 'Business Strategy Playbook',
+        // Accessories
+        'Leather Bifold Wallet', 'Canvas Backpack 25L', 'Polarised Sunglasses',
+        'Stainless Steel Watch', 'Minimalist Card Holder',
+        // Beauty & Health
+        'Vitamin C Serum 30ml', 'Natural Face Moisturiser', 'Collagen Supplement',
+        'Essential Oil Diffuser', 'Resistance Band Set',
+    ];
+
+    private static array $variationColors = [
+        'Black', 'White', 'Navy', 'Gray', 'Red', 'Blue', 'Green',
+        'Pink', 'Beige', 'Charcoal', 'Olive', 'Burgundy', 'Space Gray', 'Midnight',
+    ];
+
+    private static array $variationSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
+    private static array $variationStorage = ['64GB', '128GB', '256GB', '512GB', '1TB'];
+
+    private static array $couponCodes = [
+        'WELCOME10', 'SUMMER25', 'BLACKFRIDAY', 'NEWYEAR2025', 'FLASH50',
+        'EARLYBIRD15', 'VIP20', 'SAVE30', 'FIRSTORDER', 'LOYALTY5',
+        'HOLIDAY20', 'SPRINGSALE', 'CYBER10', 'BACK2SCHOOL', 'REFERRAL15',
+        'WEEKEND20', 'BUNDLE10', 'PREMIUM25', 'CLEARANCE40', 'LAUNCH10',
+        'MEMBER15', 'PARTNER20', 'TRIAL10', 'UPGRADE25', 'RENEW10',
+        'ANNIVERSARY30', 'GIFT10', 'BULK15', 'PRO20', 'COMEBACK10',
+    ];
+
+    private static array $orderNotes = [
+        'Please leave at the front door.',
+        'Call before delivery.',
+        'Gift — please do not include invoice.',
+        'Fragile — handle with care.',
+        'Leave with neighbour if not home.',
+        '',
+        '',
+        '',
+    ];
+
     // -------------------------------------------------------------------------
     // Public API — People
     // -------------------------------------------------------------------------
@@ -456,11 +512,112 @@ HTML;
     }
 
     // -------------------------------------------------------------------------
+    // Public API — E-Commerce
+    // -------------------------------------------------------------------------
+
+    public static function productName(): string
+    {
+        return self::pick(self::$productNames);
+    }
+
+    public static function productDescription(): string
+    {
+        return self::paragraph(rand(2, 3));
+    }
+
+    public static function productSku(): string
+    {
+        $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $part1 = '';
+        $part2 = '';
+        for ($i = 0; $i < 4; $i++) {
+            $part1 .= $chars[rand(0, strlen($chars) - 1)];
+        }
+        for ($i = 0; $i < 3; $i++) {
+            $part2 .= $chars[rand(0, strlen($chars) - 1)];
+        }
+        return 'SKU-' . $part1 . '-' . $part2;
+    }
+
+    public static function variationTitle(): string
+    {
+        $pattern = rand(1, 3);
+        if ($pattern === 1) {
+            return self::pick(self::$variationColors) . ' / ' . self::pick(self::$variationSizes);
+        }
+        if ($pattern === 2) {
+            return self::pick(self::$variationStorage) . ' / ' . self::pick(self::$variationColors);
+        }
+        return self::pick(self::$variationColors);
+    }
+
+    public static function couponCode(): string
+    {
+        return self::pick(self::$couponCodes);
+    }
+
+    /**
+     * Returns a weighted random payment method slug and its human title.
+     * @return array{method: string, title: string}
+     */
+    public static function paymentMethod(): array
+    {
+        $roll = rand(1, 100);
+        if ($roll <= 50) {
+            return ['method' => 'stripe', 'title' => 'Stripe'];
+        }
+        if ($roll <= 75) {
+            return ['method' => 'paypal', 'title' => 'PayPal'];
+        }
+        return ['method' => 'offline_payment', 'title' => 'Offline Payment'];
+    }
+
+    public static function orderNote(): string
+    {
+        return self::pick(self::$orderNotes);
+    }
+
+    public static function receiptNumber(): string
+    {
+        static $seq = 0;
+        $seq++;
+        return 'FC-' . date('Y') . str_pad($seq + rand(1000, 9999), 5, '0', STR_PAD_LEFT);
+    }
+
+    public static function invoiceNumber(): string
+    {
+        static $invSeq = 0;
+        $invSeq++;
+        return 'INV-' . date('Y') . '-' . str_pad($invSeq + rand(1000, 9999), 5, '0', STR_PAD_LEFT);
+    }
+
+    public static function ipAddress(): string
+    {
+        // Avoids reserved ranges; generates a plausible public IPv4
+        $ranges = [
+            [1, 9],   [11, 126], [128, 172],
+            [174, 191], [193, 223],
+        ];
+        $range = self::pick($ranges);
+        return rand($range[0], $range[1]) . '.' . rand(0, 255) . '.' . rand(0, 255) . '.' . rand(1, 254);
+    }
+
+    public static function transactionId(): string
+    {
+        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $id    = '';
+        for ($i = 0; $i < 24; $i++) {
+            $id .= $chars[rand(0, strlen($chars) - 1)];
+        }
+        return 'txn_' . $id;
+    }
+
+    // -------------------------------------------------------------------------
     // Internal
     // -------------------------------------------------------------------------
 
     /** @internal */
-    private static function pick(array $arr): string
+    private static function pick(array $arr): mixed
     {
         return $arr[array_rand($arr)];
     }
