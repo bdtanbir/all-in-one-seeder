@@ -186,27 +186,33 @@ class FluentCrmController
      */
     private function runSeeders(array $params): array
     {
-        $urlCount = max(5, $params['campaigns'] * 3);
+        $shouldSeedSubscriberPivot   = $params['subscribers'] > 0;
+        $shouldSeedCampaignDerived   = $params['campaigns'] > 0;
+        $shouldSeedFunnelSequences   = $params['funnels'] > 0 && $params['funnel_sequences'] > 0;
+        $shouldSeedFunnelSubscribers = $params['funnels'] > 0 && $params['subscribers'] > 0;
+        $shouldSeedFunnelMetrics     = $shouldSeedFunnelSequences && $shouldSeedFunnelSubscribers;
+
+        $urlCount = $shouldSeedCampaignDerived ? max(5, $params['campaigns'] * 3) : 0;
 
         $steps = [
             'companies'            => fn () => (new CompanySeeder())->seed($params['companies']),
             'lists'                => fn () => (new ListSeeder())->seed($params['lists']),
             'tags'                 => fn () => (new TagSeeder())->seed($params['tags']),
             'subscribers'          => fn () => (new SubscriberSeeder())->seed($params['subscribers']),
-            'subscriber_pivot'     => fn () => (new SubscriberPivotSeeder())->seed(0),
+            'subscriber_pivot'     => fn () => $shouldSeedSubscriberPivot ? (new SubscriberPivotSeeder())->seed(0) : 0,
             'subscriber_notes'     => fn () => (new SubscriberNoteSeeder())->seed($params['subscriber_notes']),
             'subscriber_meta'      => fn () => (new SubscriberMetaSeeder())->seed($params['subscriber_meta']),
             'campaigns'            => fn () => (new CampaignSeeder())->seed($params['campaigns']),
             'recurring_campaigns'  => fn () => (new RecurringCampaignSeeder())->seed($params['recurring_campaigns']),
             'email_sequences'      => fn () => (new EmailSequenceSeeder())->seed($params['email_sequences']),
             'email_templates'      => fn () => (new EmailTemplateSeeder())->seed($params['email_templates']),
-            'campaign_emails'      => fn () => (new CampaignEmailSeeder())->seed(0),
-            'url_stores'           => fn () => (new UrlStoreSeeder())->seed($urlCount),
-            'campaign_url_metrics' => fn () => (new CampaignUrlMetricSeeder())->seed(0),
+            'campaign_emails'      => fn () => $shouldSeedCampaignDerived ? (new CampaignEmailSeeder())->seed(0) : 0,
+            'url_stores'           => fn () => $shouldSeedCampaignDerived ? (new UrlStoreSeeder())->seed($urlCount) : 0,
+            'campaign_url_metrics' => fn () => $shouldSeedCampaignDerived ? (new CampaignUrlMetricSeeder())->seed(0) : 0,
             'funnels'              => fn () => (new FunnelSeeder())->seed($params['funnels']),
-            'funnel_sequences'     => fn () => (new FunnelSequenceSeeder())->seed($params['funnel_sequences']),
-            'funnel_subscribers'   => fn () => (new FunnelSubscriberSeeder())->seed(0),
-            'funnel_metrics'       => fn () => (new FunnelMetricSeeder())->seed(0),
+            'funnel_sequences'     => fn () => $shouldSeedFunnelSequences ? (new FunnelSequenceSeeder())->seed($params['funnel_sequences']) : 0,
+            'funnel_subscribers'   => fn () => $shouldSeedFunnelSubscribers ? (new FunnelSubscriberSeeder())->seed(0) : 0,
+            'funnel_metrics'       => fn () => $shouldSeedFunnelMetrics ? (new FunnelMetricSeeder())->seed(0) : 0,
         ];
 
         $seeded = [];

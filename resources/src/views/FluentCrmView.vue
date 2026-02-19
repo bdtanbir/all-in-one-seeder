@@ -76,8 +76,8 @@
         </div>
 
         <p class="aios-note">
-          Campaign emails, funnel enrollments, and metrics are derived automatically
-          from the records above.
+          Derived tables (relationships, campaign emails/metrics, funnel enrollments/metrics)
+          run only when their related parent inputs are greater than zero.
         </p>
 
         <div class="aios-action-bar">
