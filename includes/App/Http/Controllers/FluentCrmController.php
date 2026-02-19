@@ -199,7 +199,7 @@ class FluentCrmController
             'lists'                => fn () => (new ListSeeder())->seed($params['lists']),
             'tags'                 => fn () => (new TagSeeder())->seed($params['tags']),
             'subscribers'          => fn () => (new SubscriberSeeder())->seed($params['subscribers']),
-            'subscriber_pivot'     => fn () => $shouldSeedSubscriberPivot ? (new SubscriberPivotSeeder())->seed(0) : 0,
+            'subscriber_pivot'     => fn () => $shouldSeedSubscriberPivot ? (new SubscriberPivotSeeder())->seed($params['subscribers']) : 0,
             'subscriber_notes'     => fn () => (new SubscriberNoteSeeder())->seed($params['subscriber_notes']),
             'subscriber_meta'      => fn () => (new SubscriberMetaSeeder())->seed($params['subscriber_meta']),
             'campaigns'            => fn () => (new CampaignSeeder())->seed($params['campaigns']),
