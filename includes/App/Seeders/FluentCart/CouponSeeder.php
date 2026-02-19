@@ -50,8 +50,8 @@ class CouponSeeder extends AbstractSeeder
                 'max_use_per_customer' => rand(1, 10),
             ]);
 
-            // Derive a human-readable title from the code
-            $title = ucwords(strtolower(str_replace(['-', '_', '0123456789'], ' ', $code)));
+            // Derive a human-readable title from the code (strip digits and separators)
+            $title = ucwords(strtolower(preg_replace('/[\-\_0-9]+/', ' ', $code)));
 
             $rows[] = [
                 'title'            => trim($title),

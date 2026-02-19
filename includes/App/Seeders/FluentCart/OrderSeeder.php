@@ -75,7 +75,10 @@ class OrderSeeder extends AbstractSeeder
             $paid     = $paymentStatus === 'paid' ? $total : 0;
 
             $createdAt   = $this->randDate('-2 years', 'now');
-            $completedAt = $status === 'completed' ? $createdAt : null;
+            // Completed orders finish 1–48 hours after creation, not at the same instant
+            $completedAt = $status === 'completed'
+                ? date('Y-m-d H:i:s', strtotime($createdAt) + rand(3600, 172800))
+                : null;
 
             $rows[] = [
                 'status'                => $status,

@@ -59,6 +59,7 @@ class FluentCartController
     public function seed(WP_REST_Request $request): WP_REST_Response
     {
         @set_time_limit(300);
+        @ini_set('memory_limit', '256M');
 
         if ($guard = $this->guardFluentCartActive()) {
             return $guard;

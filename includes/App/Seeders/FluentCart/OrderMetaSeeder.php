@@ -31,9 +31,10 @@ class OrderMetaSeeder extends AbstractSeeder
 
         $allKeys = ['_source', '_checkout_page_id', '_customer_note', '_fulfillment_note'];
 
-        $cols = ['order_id', 'meta_key', 'meta_value', 'created_at', 'updated_at'];
+        // Use only the guaranteed core columns; fct_order_meta follows the
+        // standard WP meta-table pattern (no created_at / updated_at columns).
+        $cols = ['order_id', 'meta_key', 'meta_value'];
         $rows = [];
-        $now  = $this->now();
 
         foreach ($orderIds as $orderId) {
             $metaCount    = rand(2, 4);
@@ -54,8 +55,6 @@ class OrderMetaSeeder extends AbstractSeeder
                     'order_id'   => (int) $orderId,
                     'meta_key'   => $key,
                     'meta_value' => $value,
-                    'created_at' => $now,
-                    'updated_at' => $now,
                 ];
             }
 
