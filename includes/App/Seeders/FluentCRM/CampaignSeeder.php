@@ -51,7 +51,7 @@ class CampaignSeeder extends AbstractSeeder
                 'email_pre_header' => FakeData::preHeader(),
                 'email_body'       => FakeData::loremHtml(),
                 'recipients_count' => rand(10, 500),
-                'design_template'  => 'raw',
+                'design_template'  => 'simple',
                 'scheduled_at'     => $scheduledAt,
                 'settings'         => serialize($settings),
                 'created_by'       => $adminId,

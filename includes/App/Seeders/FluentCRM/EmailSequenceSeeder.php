@@ -79,7 +79,7 @@ class EmailSequenceSeeder extends AbstractSeeder
                     'email_body'        => FakeData::loremHtml(),
                     'delay'             => $cumulativeDelay,
                     'recipients_count'  => 0,
-                    'design_template'   => 'raw',
+                    'design_template'   => 'simple',
                     'scheduled_at'      => null,
                     'settings'          => serialize([
                         'action_triggers' => [],

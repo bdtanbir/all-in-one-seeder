@@ -67,6 +67,7 @@ class RestApi
             'campaigns'          => $intArg,
             'recurring_campaigns' => $intArg,
             'email_sequences'    => $intArg,
+            'email_templates'    => $intArg,
             'funnels'            => $intArg,
             'funnel_sequences'   => $intArg,
         ];

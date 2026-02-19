@@ -7,6 +7,7 @@ use AllInOneSeeder\App\Seeders\FluentCRM\CampaignSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\CampaignUrlMetricSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\CompanySeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\EmailSequenceSeeder;
+use AllInOneSeeder\App\Seeders\FluentCRM\EmailTemplateSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\FunnelMetricSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\FunnelSeeder;
 use AllInOneSeeder\App\Seeders\FluentCRM\FunnelSequenceSeeder;
@@ -35,6 +36,7 @@ class FluentCrmController
         'campaigns'        => 5,
         'recurring_campaigns' => 3,
         'email_sequences'  => 3,
+        'email_templates'  => 5,
         'funnels'          => 3,
         'funnel_sequences' => 5,
     ];
@@ -197,6 +199,7 @@ class FluentCrmController
             'campaigns'            => fn () => (new CampaignSeeder())->seed($params['campaigns']),
             'recurring_campaigns'  => fn () => (new RecurringCampaignSeeder())->seed($params['recurring_campaigns']),
             'email_sequences'      => fn () => (new EmailSequenceSeeder())->seed($params['email_sequences']),
+            'email_templates'      => fn () => (new EmailTemplateSeeder())->seed($params['email_templates']),
             'campaign_emails'      => fn () => (new CampaignEmailSeeder())->seed(0),
             'url_stores'           => fn () => (new UrlStoreSeeder())->seed($urlCount),
             'campaign_url_metrics' => fn () => (new CampaignUrlMetricSeeder())->seed(0),
@@ -238,6 +241,7 @@ class FluentCrmController
             'campaign_emails'       => new CampaignEmailSeeder(),
             'campaigns'             => new CampaignSeeder(),
             'subscriber_meta'       => new SubscriberMetaSeeder(),
+            'email_templates'       => new EmailTemplateSeeder(),
             'subscriber_notes'      => new SubscriberNoteSeeder(),
             'subscriber_pivot'      => new SubscriberPivotSeeder(),
             'subscribers'           => new SubscriberSeeder(),
@@ -293,6 +297,12 @@ class FluentCrmController
 
             $counts[$key] = (int) ($wpdb->get_var($sql) ?? 0);
         }
+
+        $counts['email_templates'] = (int) (
+            $wpdb->get_var(
+                "SELECT COUNT(*) FROM `{$wpdb->posts}` WHERE post_type = 'fc_template' AND post_status IN ('publish','draft')"
+            ) ?? 0
+        );
 
         $wpdb->suppress_errors(false);
 
