@@ -23,7 +23,7 @@ class SubscriptionSeeder extends AbstractSeeder
     {
         $this->inserted = 0;
 
-        $paidOrders = $this->fetchPaidOrders();
+        $paidOrders = $this->fetchPaidOrders($count);
         $products   = $this->fetchProductVariations();
 
         if (empty($paidOrders) || empty($products)) {
@@ -127,16 +127,23 @@ class SubscriptionSeeder extends AbstractSeeder
         $this->truncateTable($this->table);
     }
 
-    private function fetchPaidOrders(): array
+    private function fetchPaidOrders(int $limit = 0): array
     {
         $table = $this->db->prefix . 'fct_orders';
-
-        return $this->db->get_results(
-            "SELECT id, customer_id, payment_method, created_at
+        $sql   = "SELECT id, customer_id, payment_method, created_at
              FROM `{$table}`
              WHERE payment_status = 'paid'
-             ORDER BY id ASC"
-        ) ?: [];
+             ORDER BY id DESC";
+        if ($limit > 0) {
+            $sql .= $this->db->prepare(' LIMIT %d', $limit);
+        }
+        $orders = $this->db->get_results($sql) ?: [];
+
+        if ($limit > 0) {
+            $orders = array_reverse($orders);
+        }
+
+        return $orders;
     }
 
     /**

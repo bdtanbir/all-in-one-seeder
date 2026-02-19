@@ -17,7 +17,7 @@ class CustomerAddressSeeder extends AbstractSeeder
     {
         $this->inserted = 0;
 
-        $customers = $this->fetchCustomers();
+        $customers = $this->fetchCustomers($count);
 
         if (empty($customers)) {
             return 0;
@@ -85,14 +85,21 @@ class CustomerAddressSeeder extends AbstractSeeder
         $this->truncateTable($this->table);
     }
 
-    private function fetchCustomers(): array
+    private function fetchCustomers(int $limit = 0): array
     {
         $table = $this->db->prefix . 'fct_customers';
-
-        return $this->db->get_results(
-            "SELECT id, first_name, last_name, city, state, postcode, country, created_at
+        $sql   = "SELECT id, first_name, last_name, city, state, postcode, country, created_at
              FROM `{$table}`
-             ORDER BY id ASC"
-        ) ?: [];
+             ORDER BY id DESC";
+        if ($limit > 0) {
+            $sql .= $this->db->prepare(' LIMIT %d', $limit);
+        }
+        $customers = $this->db->get_results($sql) ?: [];
+
+        if ($limit > 0) {
+            $customers = array_reverse($customers);
+        }
+
+        return $customers;
     }
 }

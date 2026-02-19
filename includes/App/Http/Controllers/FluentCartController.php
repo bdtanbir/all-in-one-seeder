@@ -180,31 +180,31 @@ class FluentCartController
             'coupons'            => fn () => (new CouponSeeder())->seed($params['coupons']),
 
             // Step 2 — Depends on customers
-            'customer_addresses' => fn () => $hasCustomers ? (new CustomerAddressSeeder())->seed(0) : 0,
+            'customer_addresses' => fn () => $hasCustomers ? (new CustomerAddressSeeder())->seed($params['customers']) : 0,
 
             // Step 3 — Depends on customers
             'orders'             => fn () => $hasCustomers ? (new OrderSeeder())->seed($params['orders']) : 0,
 
             // Step 4 — Depends on orders + products
-            'order_items'        => fn () => ($hasOrders && $hasProducts) ? (new OrderItemSeeder())->seed(0) : 0,
+            'order_items'        => fn () => ($hasOrders && $hasProducts) ? (new OrderItemSeeder())->seed($params['orders']) : 0,
 
             // Step 5 — Depends on orders + customers
-            'order_addresses'    => fn () => ($hasOrders && $hasCustomers) ? (new OrderAddressSeeder())->seed(0) : 0,
+            'order_addresses'    => fn () => ($hasOrders && $hasCustomers) ? (new OrderAddressSeeder())->seed($params['orders']) : 0,
 
             // Step 6 — Depends on orders
-            'order_transactions' => fn () => $hasOrders ? (new OrderTransactionSeeder())->seed(0) : 0,
+            'order_transactions' => fn () => $hasOrders ? (new OrderTransactionSeeder())->seed($params['orders']) : 0,
 
             // Step 7 — Depends on orders + coupons
-            'applied_coupons'    => fn () => ($hasOrders && $hasCoupons) ? (new AppliedCouponSeeder())->seed(0) : 0,
+            'applied_coupons'    => fn () => ($hasOrders && $hasCoupons) ? (new AppliedCouponSeeder())->seed($params['orders']) : 0,
 
             // Step 8 — Depends on orders
-            'order_meta'         => fn () => $hasOrders ? (new OrderMetaSeeder())->seed(0) : 0,
+            'order_meta'         => fn () => $hasOrders ? (new OrderMetaSeeder())->seed($params['orders']) : 0,
 
             // Step 9 — Depends on orders (completed/processing only)
-            'order_operations'   => fn () => $hasOrders ? (new OrderOperationSeeder())->seed(0) : 0,
+            'order_operations'   => fn () => $hasOrders ? (new OrderOperationSeeder())->seed($params['orders']) : 0,
 
             // Step 10 — Depends on orders + customers + products
-            'subscriptions'      => fn () => $hasPaidOrders ? (new SubscriptionSeeder())->seed(0) : 0,
+            'subscriptions'      => fn () => $hasPaidOrders ? (new SubscriptionSeeder())->seed($params['orders']) : 0,
         ];
 
         $seeded = [];

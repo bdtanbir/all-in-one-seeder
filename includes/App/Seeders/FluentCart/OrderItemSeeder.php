@@ -23,7 +23,7 @@ class OrderItemSeeder extends AbstractSeeder
     {
         $this->inserted = 0;
 
-        $orders     = $this->fetchOrders();
+        $orders     = $this->fetchOrders($count);
         $productMap = $this->fetchProductMap();
 
         if (empty($orders) || empty($productMap)) {
@@ -94,13 +94,20 @@ class OrderItemSeeder extends AbstractSeeder
         $this->truncateTable($this->table);
     }
 
-    private function fetchOrders(): array
+    private function fetchOrders(int $limit = 0): array
     {
         $table = $this->db->prefix . 'fct_orders';
+        $sql   = "SELECT id, created_at FROM `{$table}` ORDER BY id DESC";
+        if ($limit > 0) {
+            $sql .= $this->db->prepare(' LIMIT %d', $limit);
+        }
+        $orders = $this->db->get_results($sql) ?: [];
 
-        return $this->db->get_results(
-            "SELECT id, created_at FROM `{$table}` ORDER BY id ASC"
-        ) ?: [];
+        if ($limit > 0) {
+            $orders = array_reverse($orders);
+        }
+
+        return $orders;
     }
 
     /**

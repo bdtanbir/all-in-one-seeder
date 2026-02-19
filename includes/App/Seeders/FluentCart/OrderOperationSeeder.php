@@ -24,7 +24,7 @@ class OrderOperationSeeder extends AbstractSeeder
         $this->inserted = 0;
 
         $adminId = $this->adminUserId();
-        $orders  = $this->fetchEligibleOrders();
+        $orders  = $this->fetchEligibleOrders($count);
 
         if (empty($orders)) {
             return 0;
@@ -82,15 +82,22 @@ class OrderOperationSeeder extends AbstractSeeder
         $this->truncateTable($this->table);
     }
 
-    private function fetchEligibleOrders(): array
+    private function fetchEligibleOrders(int $limit = 0): array
     {
         $table = $this->db->prefix . 'fct_orders';
-
-        return $this->db->get_results(
-            "SELECT id, status, payment_method_title, created_at
+        $sql   = "SELECT id, status, payment_method_title, created_at
              FROM `{$table}`
              WHERE status IN ('completed', 'processing')
-             ORDER BY id ASC"
-        ) ?: [];
+             ORDER BY id DESC";
+        if ($limit > 0) {
+            $sql .= $this->db->prepare(' LIMIT %d', $limit);
+        }
+        $orders = $this->db->get_results($sql) ?: [];
+
+        if ($limit > 0) {
+            $orders = array_reverse($orders);
+        }
+
+        return $orders;
     }
 }

@@ -22,7 +22,7 @@ class AppliedCouponSeeder extends AbstractSeeder
     {
         $this->inserted = 0;
 
-        $orderMap = $this->fetchOrderMap();
+        $orderMap = $this->fetchOrderMap($count);
         $coupons  = $this->fetchCoupons();
 
         if (empty($orderMap) || empty($coupons)) {
@@ -80,12 +80,18 @@ class AppliedCouponSeeder extends AbstractSeeder
     }
 
     /** Returns order_id → ['subtotal' => int, 'created_at' => string] */
-    private function fetchOrderMap(): array
+    private function fetchOrderMap(int $limit = 0): array
     {
         $table   = $this->db->prefix . 'fct_orders';
-        $results = $this->db->get_results(
-            "SELECT id, subtotal, created_at FROM `{$table}` ORDER BY id ASC"
-        ) ?: [];
+        $sql     = "SELECT id, subtotal, created_at FROM `{$table}` ORDER BY id DESC";
+        if ($limit > 0) {
+            $sql .= $this->db->prepare(' LIMIT %d', $limit);
+        }
+        $results = $this->db->get_results($sql) ?: [];
+
+        if ($limit > 0) {
+            $results = array_reverse($results);
+        }
 
         $map = [];
         foreach ($results as $r) {

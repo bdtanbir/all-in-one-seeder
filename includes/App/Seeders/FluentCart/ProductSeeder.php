@@ -67,7 +67,7 @@ class ProductSeeder extends AbstractSeeder
 
             // 2. Insert 1–3 variations; track their prices for detail min/max
             $varCount      = rand(1, 3);
-            $variationType = $varCount === 1 ? 'simple' : 'simple_variation';
+            $variationType = $varCount === 1 ? 'simple' : 'simple_variations';
             $prices        = [];
             $firstVarId    = null;
 

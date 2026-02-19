@@ -16,14 +16,11 @@ class OrderMetaSeeder extends AbstractSeeder
         $this->table = $this->db->prefix . 'fct_order_meta';
     }
 
-    /**
-     * $count is unused — meta is derived from existing orders.
-     */
     public function seed(int $count): int
     {
         $this->inserted = 0;
 
-        $orderIds = $this->fetchIds($this->db->prefix . 'fct_orders');
+        $orderIds = $this->fetchRecentOrderIds($count);
 
         if (empty($orderIds)) {
             return 0;
@@ -74,5 +71,26 @@ class OrderMetaSeeder extends AbstractSeeder
     public function truncate(): void
     {
         $this->truncateTable($this->table);
+    }
+
+    /**
+     * Returns latest order IDs when $limit > 0, otherwise all order IDs.
+     *
+     * @return int[]
+     */
+    private function fetchRecentOrderIds(int $limit = 0): array
+    {
+        $table = $this->db->prefix . 'fct_orders';
+        $sql   = "SELECT id FROM `{$table}` ORDER BY id DESC";
+        if ($limit > 0) {
+            $sql .= $this->db->prepare(' LIMIT %d', $limit);
+        }
+        $ids = $this->db->get_col($sql) ?: [];
+
+        if ($limit > 0) {
+            $ids = array_reverse($ids);
+        }
+
+        return array_map('intval', $ids);
     }
 }
