@@ -5,8 +5,8 @@ namespace AllInOneSeeder\App\Seeders\FluentCart;
 use AllInOneSeeder\App\Seeders\AbstractSeeder;
 
 /**
- * Seeds fct_order_items. Inserts 1–4 line items per order, picking
- * random product variations and converting float prices to cents.
+ * Seeds fct_order_items using FluentCart's actual schema.
+ * Inserts 1–4 line items per order from existing product variations.
  */
 class OrderItemSeeder extends AbstractSeeder
 {
@@ -16,9 +16,6 @@ class OrderItemSeeder extends AbstractSeeder
         $this->table = $this->db->prefix . 'fct_order_items';
     }
 
-    /**
-     * $count is unused — items are derived from existing orders.
-     */
     public function seed(int $count): int
     {
         $this->inserted = 0;
@@ -33,10 +30,13 @@ class OrderItemSeeder extends AbstractSeeder
         $productIds = array_keys($productMap);
 
         $cols = [
-            'order_id', 'product_id', 'variation_id', 'item_name',
-            'quantity', 'unit_price', 'item_price',
-            'discount_type', 'discount_amount', 'tax_total',
-            'fulfillment_type', 'item_status', 'type',
+            'order_id', 'post_id', 'object_id',
+            'fulfillment_type', 'payment_type',
+            'post_title', 'title', 'cart_index',
+            'quantity', 'unit_price', 'cost', 'subtotal',
+            'tax_amount', 'shipping_charge', 'discount_total',
+            'line_total', 'refund_total', 'rate',
+            'other_info', 'line_meta',
             'created_at', 'updated_at',
         ];
         $rows = [];
@@ -52,25 +52,32 @@ class OrderItemSeeder extends AbstractSeeder
 
                 // Variation prices are stored as floats; order items use cents (integer)
                 $unitPrice = (int) round($variation['item_price'] * 100);
-                $lineTotal = $unitPrice * $qty;
-                $tax       = (int) round($lineTotal * 0.08);
-
-                $type = $variation['fulfillment_type'] === 'physical' ? 'physical' : 'digital';
+                $subtotal  = $unitPrice * $qty;
+                $discount  = 0;
+                $tax       = (int) round($subtotal * 0.08);
+                $lineTotal = $subtotal + $tax - $discount;
 
                 $rows[] = [
                     'order_id'         => (int) $order->id,
-                    'product_id'       => $productId,
-                    'variation_id'     => (int) $variation['id'],
-                    'item_name'        => $variation['item_name'],
+                    'post_id'          => $productId,
+                    'object_id'        => (int) $variation['id'],
+                    'fulfillment_type' => $variation['fulfillment_type'],
+                    'payment_type'     => $variation['payment_type'] ?: 'onetime',
+                    'post_title'       => $variation['post_title'],
+                    'title'            => $variation['variation_title'],
+                    'cart_index'       => $j + 1,
                     'quantity'         => $qty,
                     'unit_price'       => $unitPrice,
-                    'item_price'       => $lineTotal,
-                    'discount_type'    => 'none',
-                    'discount_amount'  => 0,
-                    'tax_total'        => $tax,
-                    'fulfillment_type' => $variation['fulfillment_type'],
-                    'item_status'      => 'active',
-                    'type'             => $type,
+                    'cost'             => 0,
+                    'subtotal'         => $subtotal,
+                    'tax_amount'       => $tax,
+                    'shipping_charge'  => 0,
+                    'discount_total'   => $discount,
+                    'line_total'       => $lineTotal,
+                    'refund_total'     => 0,
+                    'rate'             => 1,
+                    'other_info'       => '{}',
+                    'line_meta'        => '{}',
                     'created_at'       => $order->created_at,
                     'updated_at'       => $order->created_at,
                 ];
@@ -111,29 +118,24 @@ class OrderItemSeeder extends AbstractSeeder
     }
 
     /**
-     * Returns post_id → [ [id, item_price, fulfillment_type, item_name], ... ]
+     * Returns post_id => list of variation payloads.
      */
     private function fetchProductMap(): array
     {
         $postsTable = $this->db->posts;
         $varsTable  = $this->db->prefix . 'fct_product_variations';
 
-        $products = $this->db->get_results(
-            "SELECT ID, post_title FROM `{$postsTable}` WHERE post_type = 'fluent-products' ORDER BY ID ASC"
+        $variations = $this->db->get_results(
+            "SELECT v.id, v.post_id, v.item_price, v.fulfillment_type, v.payment_type, v.variation_title, p.post_title
+             FROM `{$varsTable}` v
+             INNER JOIN `{$postsTable}` p ON p.ID = v.post_id
+             WHERE p.post_type = 'fluent-products'
+             ORDER BY v.post_id ASC, v.id ASC"
         ) ?: [];
 
-        if (empty($products)) {
+        if (empty($variations)) {
             return [];
         }
-
-        $nameMap = [];
-        foreach ($products as $p) {
-            $nameMap[(int) $p->ID] = $p->post_title;
-        }
-
-        $variations = $this->db->get_results(
-            "SELECT id, post_id, item_price, fulfillment_type FROM `{$varsTable}` ORDER BY post_id ASC"
-        ) ?: [];
 
         $map = [];
         foreach ($variations as $var) {
@@ -145,7 +147,9 @@ class OrderItemSeeder extends AbstractSeeder
                 'id'               => (int) $var->id,
                 'item_price'       => (float) $var->item_price,
                 'fulfillment_type' => $var->fulfillment_type,
-                'item_name'        => $nameMap[$postId] ?? 'Product',
+                'payment_type'     => $var->payment_type,
+                'variation_title'  => $var->variation_title ?: 'Default',
+                'post_title'       => $var->post_title ?: 'Product',
             ];
         }
 
