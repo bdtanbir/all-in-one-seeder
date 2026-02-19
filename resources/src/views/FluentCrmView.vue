@@ -91,6 +91,14 @@
           </button>
 
           <button
+            class="aios-btn aios-btn--outline"
+            :disabled="running"
+            @click="clearInputs"
+          >
+            Clear Inputs
+          </button>
+
+          <button
             class="aios-btn aios-btn--danger"
             :disabled="running"
             @click="runTruncate"
@@ -187,6 +195,14 @@ async function refreshStats() {
     stats.value = data.counts ?? null;
   } catch {
     // non-fatal — stats card just keeps its previous values
+  }
+}
+
+function clearInputs() {
+  for (const section of sections.value) {
+    for (const field of section.fields) {
+      form[field.key] = 0;
+    }
   }
 }
 
