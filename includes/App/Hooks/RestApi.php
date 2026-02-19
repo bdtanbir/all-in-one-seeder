@@ -2,6 +2,7 @@
 
 namespace AllInOneSeeder\App\Hooks;
 
+use AllInOneSeeder\App\Http\Controllers\FluentCartController;
 use AllInOneSeeder\App\Http\Controllers\FluentCrmController;
 use AllInOneSeeder\App\Http\Controllers\PluginsController;
 
@@ -41,6 +42,26 @@ class RestApi
             'callback'            => [new FluentCrmController(), 'stats'],
             'permission_callback' => [$this, 'requireAdminPermission'],
         ]);
+
+        register_rest_route(self::NAMESPACE, '/seed/fluent-cart', [
+            [
+                'methods'             => 'POST',
+                'callback'            => [new FluentCartController(), 'seed'],
+                'permission_callback' => [$this, 'requireAdminPermission'],
+                'args'                => $this->cartSeedArgs(),
+            ],
+            [
+                'methods'             => 'DELETE',
+                'callback'            => [new FluentCartController(), 'truncate'],
+                'permission_callback' => [$this, 'requireAdminPermission'],
+            ],
+        ]);
+
+        register_rest_route(self::NAMESPACE, '/seed/fluent-cart/stats', [
+            'methods'             => 'GET',
+            'callback'            => [new FluentCartController(), 'stats'],
+            'permission_callback' => [$this, 'requireAdminPermission'],
+        ]);
     }
 
     public function requireAdminPermission(): bool
@@ -70,6 +91,23 @@ class RestApi
             'email_templates'    => $intArg,
             'funnels'            => $intArg,
             'funnel_sequences'   => $intArg,
+        ];
+    }
+
+    private function cartSeedArgs(): array
+    {
+        $intArg = [
+            'type'     => 'integer',
+            'minimum'  => 0,
+            'maximum'  => 5000,
+            'required' => false,
+        ];
+
+        return [
+            'products'  => $intArg,
+            'customers' => $intArg,
+            'coupons'   => $intArg,
+            'orders'    => $intArg,
         ];
     }
 }
