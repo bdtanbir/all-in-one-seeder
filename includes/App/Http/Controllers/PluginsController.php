@@ -52,6 +52,39 @@ class PluginsController
                         ],
                     ],
                 ],
+                [
+                    'id'          => 'fluent-cart',
+                    'name'        => 'FluentCart',
+                    'description' => 'Seed products, customers, orders, coupons and subscriptions.',
+                    'active'      => class_exists('FluentCart\App\Models\Order'),
+                    'route'       => '/seed/fluent-cart',
+                    'sections'    => [
+                        [
+                            'label'  => 'Catalog',
+                            'fields' => [
+                                ['key' => 'products', 'label' => 'Products', 'default' => 10],
+                            ],
+                        ],
+                        [
+                            'label'  => 'Customers',
+                            'fields' => [
+                                ['key' => 'customers', 'label' => 'Customers', 'default' => 20],
+                            ],
+                        ],
+                        [
+                            'label'  => 'Coupons',
+                            'fields' => [
+                                ['key' => 'coupons', 'label' => 'Coupons', 'default' => 5],
+                            ],
+                        ],
+                        [
+                            'label'  => 'Orders',
+                            'fields' => [
+                                ['key' => 'orders', 'label' => 'Orders', 'default' => 30],
+                            ],
+                        ],
+                    ],
+                ],
             ],
         ], 200);
     }
