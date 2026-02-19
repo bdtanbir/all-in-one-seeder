@@ -1,6 +1,8 @@
 .PHONY: build dev clean
 
 build:
+	@rm -rf builds/* assets/admin/
+	@echo "Cleaned build outputs."
 	@bash build.sh
 
 dev:
