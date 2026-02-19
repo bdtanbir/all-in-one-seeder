@@ -4,6 +4,7 @@ refs/
 builds/*
 !builds/.gitkeep
 node_modules/
+assets/
 assets/*
 !assets/.gitkeep
 .DS_Store
