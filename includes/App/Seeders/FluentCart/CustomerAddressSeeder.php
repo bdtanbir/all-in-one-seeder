@@ -24,48 +24,58 @@ class CustomerAddressSeeder extends AbstractSeeder
         }
 
         $cols = [
-            'customer_id', 'type', 'first_name', 'last_name',
-            'address', 'city', 'state', 'postcode', 'country',
-            'is_default', 'created_at', 'updated_at',
+            'customer_id', 'is_primary', 'type', 'status', 'label', 'name',
+            'address_1', 'address_2', 'city', 'state', 'postcode', 'country',
+            'phone', 'email', 'meta', 'created_at', 'updated_at',
         ];
         $rows = [];
 
         foreach ($customers as $customer) {
             $createdAt = $customer->created_at ?? $this->now();
+            $fullName  = trim(($customer->first_name ?? '') . ' ' . ($customer->last_name ?? ''));
+            $fullName  = $fullName !== '' ? $fullName : 'Customer';
 
             // Always insert one billing address as default
             $rows[] = [
                 'customer_id' => (int) $customer->id,
+                'is_primary'  => 1,
                 'type'        => 'billing',
-                'first_name'  => $customer->first_name,
-                'last_name'   => $customer->last_name,
-                'address'     => FakeData::addressLine(),
+                'status'      => 'active',
+                'label'       => 'Default Billing',
+                'name'        => $fullName,
+                'address_1'   => FakeData::addressLine(),
+                'address_2'   => '',
                 'city'        => $customer->city,
                 'state'       => $customer->state,
                 'postcode'    => $customer->postcode,
                 'country'     => $customer->country,
-                'is_default'  => 1,
+                'phone'       => FakeData::phone(),
+                'email'       => $customer->email ?? FakeData::email(),
+                'meta'        => '{}',
                 'created_at'  => $createdAt,
                 'updated_at'  => $createdAt,
             ];
 
-            // 50% chance of a saved shipping address
-            if (rand(1, 2) === 1) {
-                $rows[] = [
-                    'customer_id' => (int) $customer->id,
-                    'type'        => 'shipping',
-                    'first_name'  => $customer->first_name,
-                    'last_name'   => $customer->last_name,
-                    'address'     => FakeData::addressLine(),
-                    'city'        => $customer->city,
-                    'state'       => $customer->state,
-                    'postcode'    => $customer->postcode,
-                    'country'     => $customer->country,
-                    'is_default'  => 0,
-                    'created_at'  => $createdAt,
-                    'updated_at'  => $createdAt,
-                ];
-            }
+            // Always insert one primary shipping address so Customer profile shows both.
+            $rows[] = [
+                'customer_id' => (int) $customer->id,
+                'is_primary'  => 1,
+                'type'        => 'shipping',
+                'status'      => 'active',
+                'label'       => 'Default Shipping',
+                'name'        => $fullName,
+                'address_1'   => FakeData::addressLine(),
+                'address_2'   => '',
+                'city'        => $customer->city,
+                'state'       => $customer->state,
+                'postcode'    => $customer->postcode,
+                'country'     => $customer->country,
+                'phone'       => FakeData::phone(),
+                'email'       => $customer->email ?? FakeData::email(),
+                'meta'        => '{}',
+                'created_at'  => $createdAt,
+                'updated_at'  => $createdAt,
+            ];
 
             if (count($rows) >= 200) {
                 $this->insertBatch($rows, $cols);
