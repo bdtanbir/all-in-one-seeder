@@ -34,8 +34,7 @@ class ProductSeeder extends AbstractSeeder
             $createdAt       = $this->randDate('-2 years', 'now');
             $fulfillmentType = $this->weightedRandom([
                 'digital'  => 50,
-                'physical' => 35,
-                'service'  => 15,
+                'physical' => 50,
             ]);
 
             // 1. Insert into wp_posts

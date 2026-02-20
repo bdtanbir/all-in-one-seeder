@@ -50,8 +50,7 @@ class OrderSeeder extends AbstractSeeder
 
             $fulfillmentType = $this->weightedRandom([
                 'digital'  => 50,
-                'physical' => 35,
-                'service'  => 15,
+                'physical' => 50,
             ]);
 
             $paymentData = FakeData::paymentMethod();
